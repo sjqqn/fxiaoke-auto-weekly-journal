@@ -1,0 +1,63 @@
+name: 周日志自动生成
+
+on:
+  # 每周五 19:00 CST（= UTC 11:00）触发
+  schedule:
+    - cron: '0 11 * * 5'
+
+  # 允许手动触发（用于测试或补跑）
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'dry-run 模式（只查询归纳，不写入 CRM）'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      override_end_time:
+        description: '覆盖截止时间（留空则用当前时间，格式：2026-05-08T19:00:00+08:00）'
+        required: false
+        default: ''
+
+jobs:
+  generate-journal:
+    name: 生成并写入周日志
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 执行周日志任务
+        env:
+          MCP_TOKEN:          ${{ secrets.MCP_TOKEN }}
+          MINIMAX_API_KEY:    ${{ secrets.MINIMAX_API_KEY }}
+          OPENAI_API_KEY:     ${{ secrets.OPENAI_API_KEY }}
+          LLM_MODEL:          ${{ vars.LLM_MODEL || '' }}
+          OWNER_NAMES:        ${{ vars.OWNER_NAMES || '沈佳琪' }}
+          REVIEWER_NAMES:     ${{ vars.REVIEWER_NAMES || '安春晖yak' }}
+          OVERRIDE_END_TIME:  ${{ github.event.inputs.override_end_time || '' }}
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            node src/index.js --dry-run
+          else
+            node src/index.js
+          fi
+
+      - name: 任务失败通知（可选）
+        if: failure()
+        run: |
+          echo "⚠️ 周日志生成失败，请检查日志"
+          # 可在此添加钉钉/企微/飞书 webhook 通知

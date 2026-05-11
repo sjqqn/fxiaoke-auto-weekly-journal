@@ -1,0 +1,19 @@
+{
+  "name": "crm-auto-weekly-journal",
+  "version": "1.0.0",
+  "description": "每周五自动汇总工时明细并写入 CRM 周日志",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node src/index.js --dry-run"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.47.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

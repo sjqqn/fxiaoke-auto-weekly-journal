@@ -13,7 +13,8 @@ crm-auto/
 │   ├── mcp-client.js         # MCP 查询 / 写入封装
 │   ├── summarize.js          # 分组 + 文本模板渲染
 │   ├── journal-writer.js     # JournalObj 写入
-│   └── feishu-notify.js      # 飞书 Webhook（可选）
+│   ├── feishu-notify.js      # 飞书 Webhook（可选）
+│   └── log-capture.js        # 捕获 stdout/stderr 供飞书全文推送
 ├── launchd/                  # macOS 定时（install / uninstall / plist）
 ├── COMMANDS.md               # 常用命令备忘
 ├── .github/
@@ -73,7 +74,7 @@ bash launchd/install.sh           # 注册 launchd 任务
 
 ### 飞书通知（可选）
 
-在 `.env` 中填写 `FEISHU_WEBHOOK_URL`（飞书群「自定义机器人」完整 Webhook）。任务**成功**（含 dry-run）、**无工时跳过**、**异常失败**各推送一条文本摘要。  
+在 `.env` 中填写 `FEISHU_WEBHOOK_URL`（飞书群「自定义机器人」完整 Webhook）。任务**成功**（含 dry-run）、**无工时跳过**、**异常失败**各推送一条消息；消息内先有一段状态摘要，随后附带**本次运行捕获的完整终端输出**（`stdout`/`stderr`，与控制台一致）。日志过长时会自动拆成多条飞书消息（每条约 1.5 万字符）。  
 勿将 Webhook 提交到仓库；线上 CI 可配置同名 Secret `FEISHU_WEBHOOK_URL`。
 
 > 若 Webhook 曾在聊天/代码中泄露，请在飞书群内**删除并重新添加机器人**以轮换地址。

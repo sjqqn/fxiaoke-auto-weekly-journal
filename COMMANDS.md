@@ -50,7 +50,7 @@ tail -f ~/Library/Logs/crm-weekly-journal.log
 
 在 `.env` 中配置 `FEISHU_WEBHOOK_URL`（群机器人 Webhook 完整地址）。
 
-- 配置后：**成功写入**、**无工时跳过**、**异常失败**都会向该群推送一条简要文本。
+- 配置后：每次运行结束会推送 **状态摘要 + 完整终端日志**（与控制台输出一致；过长自动分多条）
 - **勿将 Webhook 提交到 Git**；仅用 `.env` 或 GitHub `secrets.FEISHU_WEBHOOK_URL`。
 
 详见根目录 `.env.example`。

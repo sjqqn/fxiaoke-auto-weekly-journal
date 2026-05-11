@@ -7,10 +7,14 @@
  */
 
 import 'dotenv/config';
+
 import { fetchTimesheetDetails, resolveEmployeeIds } from './mcp-client.js';
 import { groupByCategory, generateJournalContent } from './summarize.js';
 import { writeWeeklyJournal } from './journal-writer.js';
-import { sendFeishuText } from './feishu-notify.js';
+import { sendFeishuTextChunks } from './feishu-notify.js';
+import { installLogCapture, getCapturedLog } from './log-capture.js';
+
+installLogCapture();
 
 const isDryRun = process.argv.includes('--dry-run');
 const FEISHU_URL = process.env.FEISHU_WEBHOOK_URL;
@@ -21,9 +25,14 @@ const REVIEWER_NAMES = (process.env.REVIEWER_NAMES ?? '安春晖yak')
   .map(s => s.trim())
   .filter(Boolean);
 
-async function notifyFeishu(text) {
+/**
+ * 推送：摘要 + 捕获的完整终端日志（过长则飞书端自动分片）
+ */
+async function notifyFeishuWithFullLog(summaryHeader) {
+  const log = getCapturedLog();
+  const body = [summaryHeader.trim(), '', '========== 完整执行日志（stdout/stderr）==========', '', log].join('\n');
   try {
-    await sendFeishuText(FEISHU_URL, text);
+    await sendFeishuTextChunks(FEISHU_URL, body);
   } catch (e) {
     console.warn('[Feishu] 推送失败（不影响主流程）:', e.message);
   }
@@ -55,7 +64,10 @@ async function main() {
   console.log('触发时间:', nowShanghai());
   console.log('模式:', isDryRun ? 'dry-run（不写入CRM）' : '正式执行');
 
-  validateEnv();
+  if (!validateEnv()) {
+    await notifyFeishuWithFullLog('【周日志】失败：缺少 MCP_TOKEN\n时间: ' + nowShanghai());
+    process.exit(1);
+  }
 
   // Step 1: 确定统计截止时间
   const endTime = process.env.OVERRIDE_END_TIME
@@ -72,10 +84,10 @@ async function main() {
 
   if (records.length === 0) {
     console.warn('  ⚠️  本周无工时数据，跳过写入。');
-    await notifyFeishu(
-      `【周日志】无工时数据，已跳过写入\n`
-      + `时间: ${nowShanghai()}\n`
-      + `窗口: ${formatISO(startTime)} ~ ${formatISO(endTime)}`,
+    await notifyFeishuWithFullLog(
+      ['【周日志】无工时数据，已跳过写入',
+        `时间: ${nowShanghai()}`,
+        `窗口: ${formatISO(startTime)} ~ ${formatISO(endTime)}`].join('\n'),
     );
     return;
   }
@@ -118,21 +130,24 @@ async function main() {
   console.log('\n=== 任务完成 ===');
 
   const modeLine = isDryRun ? '模式: dry-run（未写 CRM）' : '模式: 已写入 CRM';
-  await notifyFeishu(
-    `【周日志】执行成功\n`
-    + `${modeLine}\n`
-    + `时间: ${nowShanghai()}\n`
-    + `周期: ${weekRange}\n`
-    + `工时条数: ${records.length}，分组数: ${groups.length}\n`
-    + `点评人: ${REVIEWER_NAMES.join('、')}${isDryRun ? '' : pickJournalMeta(writeResult)}`,
-  );
+  const summary = [
+    '【周日志】执行成功',
+    modeLine,
+    `时间: ${nowShanghai()}`,
+    `周期: ${weekRange}`,
+    `工时条数: ${records.length}，分组数: ${groups.length}`,
+    `点评人: ${REVIEWER_NAMES.join('、')}${isDryRun ? '' : pickJournalMeta(writeResult)}`,
+  ].join('\n');
+
+  await notifyFeishuWithFullLog(summary);
 }
 
 function validateEnv() {
   if (!process.env.MCP_TOKEN) {
     console.error('缺少必要环境变量: MCP_TOKEN');
-    process.exit(1);
+    return false;
   }
+  return true;
 }
 
 function formatISO(d) {
@@ -141,11 +156,12 @@ function formatISO(d) {
 
 main().catch(async err => {
   console.error('\n[ERROR]', err);
-  await notifyFeishu(
-    `【周日志】执行失败\n`
-    + `时间: ${nowShanghai()}\n`
-    + `错误: ${err?.message ?? String(err)}\n`
-    + `${err?.stack ? err.stack.slice(0, 1200) : ''}`,
-  );
+  const head = [
+    '【周日志】执行失败',
+    `时间: ${nowShanghai()}`,
+    `错误: ${err?.message ?? String(err)}`,
+    err?.stack ? `堆栈:\n${err.stack}` : '',
+  ].filter(Boolean).join('\n');
+  await notifyFeishuWithFullLog(head);
   process.exit(1);
 });

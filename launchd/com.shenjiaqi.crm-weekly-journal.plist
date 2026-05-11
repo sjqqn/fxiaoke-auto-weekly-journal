@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.shenjiaqi.crm-weekly-journal</string>
+
+    <!-- 每周五 19:00 CST 触发 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>5</integer>
+        <key>Hour</key>
+        <integer>19</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <!-- 执行入口 -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/node</string>
+        <string>/Users/shenjiaqi/cursor/crm-auto/src/index.js</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/shenjiaqi/cursor/crm-auto</string>
+
+    <!-- 输出日志（合并 stdout/stderr） -->
+    <key>StandardOutPath</key>
+    <string>/Users/shenjiaqi/Library/Logs/crm-weekly-journal.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/shenjiaqi/Library/Logs/crm-weekly-journal.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>LANG</key>
+        <string>zh_CN.UTF-8</string>
+    </dict>
+
+    <!-- 加载时不立即执行；错过触发时间在唤醒后补跑 -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

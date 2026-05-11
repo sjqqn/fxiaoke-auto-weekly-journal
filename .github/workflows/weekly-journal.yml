@@ -1,11 +1,13 @@
 name: 周日志自动生成
 
-on:
-  # 每周五 19:00 CST（= UTC 11:00）触发
-  schedule:
-    - cron: '0 11 * * 5'
+# 注意：纷享 MCP（open.fxiaoke.com）对境外 IP 返回 404，
+# GitHub Actions runner 跑在 Azure 美国节点，无法直接调用。
+# 因此 schedule 已禁用，定时任务通过 macOS launchd 本地执行
+# （见 launchd/install.sh）。此 workflow 仅保留手动触发通道，
+# 用于代码 lint / 验证；如需在 CI 跑通需使用 self-hosted runner。
 
-  # 允许手动触发（用于测试或补跑）
+on:
+  # 允许手动触发（仅作代码完整性验证；线上调用需国内 IP）
   workflow_dispatch:
     inputs:
       dry_run:

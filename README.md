@@ -45,7 +45,29 @@ node src/index.js --dry-run
 node src/index.js
 ```
 
-## CI 配置（GitHub Actions）
+## 定时任务部署
+
+> 纷享 MCP（`open.fxiaoke.com`）对境外 IP 返回 404，GitHub Actions runner（Azure 美国）无法直接调用。
+> 因此采用 **本地 macOS launchd** 跑定时任务，GitHub Actions 仅保留手动触发通道用于代码验证。
+
+### 一键安装本地定时（macOS）
+
+```bash
+npm install        # 安装依赖
+cp .env.example .env && vi .env   # 配置 MCP_TOKEN 等
+bash launchd/install.sh           # 注册 launchd 任务
+```
+
+完成后：
+- 每周五 19:00 CST 自动触发
+- 日志输出：`~/Library/Logs/crm-weekly-journal.log`
+- 立即测试一次：`launchctl start com.shenjiaqi.crm-weekly-journal`
+- 查看状态：`launchctl list | grep crm-weekly-journal`
+- 卸载：`bash launchd/uninstall.sh`
+
+> Mac 在触发时刻处于睡眠/关机会自动顺延，launchd 在唤醒后会补跑当次。
+
+### GitHub Actions（可选，仅手动触发）
 
 在仓库 **Settings → Secrets and variables → Actions** 中添加：
 
@@ -63,9 +85,8 @@ node src/index.js
 | `OWNER_NAMES` | `沈佳琪` | 工时数据归属人（多人逗号分隔） |
 | `REVIEWER_NAMES` | `安春晖yak` | 日志点评人（多人逗号分隔） |
 
-配置完成后，CI 将在每周五 UTC 11:00（CST 19:00）自动触发。
-
-也可在 Actions 页面手动触发，支持 dry-run 模式和自定义截止时间。
+CI 仅支持手动触发（Actions 页面 "Run workflow"），用于代码 lint / 验证。
+若要在 CI 跑通数据流，需把仓库 runner 改为国内 self-hosted。
 
 ## 周日志输出结构（纯文本）
 

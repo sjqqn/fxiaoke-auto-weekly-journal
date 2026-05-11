@@ -1,5 +1,5 @@
 /**
- * 分组 + 周日志正文生成（HTML 富文本）
+ * 分组 + 周日志正文生成（纯文本）
  *
  * 输入：工时明细记录数组
  * 输出：work_summary / work_plan / field_KkHJK__c
@@ -51,7 +51,7 @@ export async function generateJournalContent(groups, weekRange) {
 // ─── 模板渲染（纯文本） ─────────────────────────────────────────────────────
 
 function buildContentByTemplate(groups, weekRange) {
-  const overview = buildOverview(groups, weekRange);
+  const overview = buildOverview(groups);
   const blocks   = groups.map(buildGroupBlock);
   const workSummary = [overview, ...blocks].join('\n\n');
   return {
@@ -62,32 +62,26 @@ function buildContentByTemplate(groups, weekRange) {
 }
 
 /**
- * 「本周概览」：总工时 / 客户数 / 项目数 / 工作组数 / 分类数
+ * 「本周概览」：仅总工时 + 各「工时大类/明细分类」工时汇总（与下文分组顺序一致）
  * 已自动剔除"请假"等不展示分类
  */
-function buildOverview(groups, weekRange) {
+function buildOverview(groups) {
   const all = groups.flatMap(g => g.entries);
+  const total = all.reduce((s, e) => s + (e.tasktime || 0), 0);
 
-  const total      = all.reduce((s, e) => s + (e.tasktime || 0), 0);
-  const customers  = new Set();
-  const projects   = new Set();
-  const workgroups = new Set();
+  const lines = [
+    '【本周概览】',
+    `- 总工时：${formatTime(total) || 0} h`,
+    '',
+    '按工时分类汇总：',
+  ];
 
-  for (const e of all) {
-    if (e.customer)  customers.add(e.customer);
-    if (e.project)   projects.add(e.project);
-    if (e.workgroup) workgroups.add(e.workgroup);
+  for (const g of groups) {
+    const sub = g.entries.reduce((s, e) => s + (e.tasktime || 0), 0);
+    lines.push(`- 【${g.category}】【${g.subCategory}】：${formatTime(sub) || 0} h`);
   }
 
-  return [
-    '【本周概览】',
-    `- 周期：${weekRange}`,
-    `- 总工时：${formatTime(total) || 0} h`,
-    `- 涉及客户：${customers.size} 家`,
-    `- 涉及项目：${projects.size} 个`,
-    `- 涉及工作组：${workgroups.size} 个`,
-    `- 工时分类：${groups.length} 类`,
-  ].join('\n');
+  return lines.join('\n');
 }
 
 function buildGroupBlock(g) {

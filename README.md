@@ -105,7 +105,7 @@ CI 仅支持手动触发（Actions 页面 "Run workflow"），用于代码 lint 
 
 ```
 【本周概览】
-- 周期：YYYY-MM-DD ~ YYYY-MM-DD HH:mm
+- 周期：YYYY-MM-DD ~ YYYY-MM-DD（上海日期，不含时分秒）
 - 总工时：N h
 - 涉及客户：N 家
 - 涉及项目：N 个

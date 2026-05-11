@@ -98,8 +98,8 @@ async function main() {
   console.log(`  共 ${groups.length} 个分组:`,
     groups.map(g => `${g.category}/${g.subCategory}`).join(', '));
 
-  // Step 4: 纯文本模板渲染
-  const weekRange = `${formatISO(startTime).slice(0, 10)} ~ ${formatISO(endTime).slice(0, 16).replace('T', ' ')}`;
+  // Step 4: 纯文本模板渲染（周期仅展示日期，不含时分秒，按上海时区）
+  const weekRange = `${formatDateShanghai(startTime)} ~ ${formatDateShanghai(endTime)}`;
   console.log('\n[Step 4] 模板渲染中...');
   const { workSummary, workPlan, workDetail } = await generateJournalContent(groups, weekRange);
 
@@ -152,6 +152,16 @@ function validateEnv() {
 
 function formatISO(d) {
   return d.toISOString().replace('T', ' ').slice(0, 19);
+}
+
+/** 写入日志正文「周期」专用：YYYY-MM-DD（Asia/Shanghai，无时分秒） */
+function formatDateShanghai(d) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year:   'numeric',
+    month:  '2-digit',
+    day:    '2-digit',
+  }).format(d);
 }
 
 main().catch(async err => {

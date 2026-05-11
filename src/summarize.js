@@ -44,20 +44,20 @@ export function groupByCategory(records) {
   return [...groups.values()];
 }
 
-export async function generateJournalContent(groups, weekRange) {
-  return buildContentByTemplate(groups, weekRange);
+export async function generateJournalContent(groups) {
+  return buildContentByTemplate(groups);
 }
 
 // ─── 模板渲染（纯文本） ─────────────────────────────────────────────────────
 
-function buildContentByTemplate(groups, weekRange) {
+function buildContentByTemplate(groups) {
   const overview = buildOverview(groups);
   const blocks   = groups.map(buildGroupBlock);
   const workSummary = [overview, ...blocks].join('\n\n');
   return {
     workSummary,
     workDetail: workSummary,
-    workPlan:   buildPlan(groups, weekRange),
+    workPlan:   buildPlan(groups),
   };
 }
 
@@ -165,14 +165,14 @@ function formatSingleLine(e) {
   return `${parts.join('')}工作内容：${e.content || '—'}`;
 }
 
-function buildPlan(groups, weekRange) {
+function buildPlan(groups) {
   const cats = [...new Set(groups.map(g => g.category))];
   const lines = [];
   if (cats.length > 0) {
     lines.push(`- 持续推进本周已启动事项，重点跟进：${cats.slice(0, 3).join('、')}。`);
   }
   lines.push('- 对跨部门协同与售前支持事项保持响应节奏，确保需求评估及时输出。');
-  lines.push(`- 复盘本周期（${weekRange}）执行结果，识别后续待办与潜在风险。`);
+  lines.push('- 复盘本周期执行结果，识别后续待办与潜在风险。');
   return ['【下周关注】', ...lines].join('\n');
 }
 

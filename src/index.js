@@ -101,7 +101,7 @@ async function main() {
   // Step 4: 纯文本模板渲染（周期仅展示日期，不含时分秒，按上海时区）
   const weekRange = `${formatDateShanghai(startTime)} ~ ${formatDateShanghai(endTime)}`;
   console.log('\n[Step 4] 模板渲染中...');
-  const { workSummary, workPlan, workDetail } = await generateJournalContent(groups, weekRange);
+  const { workSummary, workPlan, workDetail } = await generateJournalContent(groups);
 
   console.log('\n--- 本期总结 ---\n', workSummary);
   console.log('\n--- 分组明细 ---\n', workDetail);

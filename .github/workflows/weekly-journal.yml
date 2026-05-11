@@ -50,7 +50,7 @@ jobs:
           LLM_MODEL:          ${{ vars.LLM_MODEL || '' }}
           OWNER_NAMES:        ${{ vars.OWNER_NAMES || '沈佳琪' }}
           REVIEWER_NAMES:     ${{ vars.REVIEWER_NAMES || '安春晖yak' }}
-          OVERRIDE_END_TIME:  ${{ github.event.inputs.override_end_time || '' }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
         run: |
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             node src/index.js --dry-run

@@ -1,19 +1,24 @@
 # CRM 周日志自动化
 
-每周五 19:00 自动拉取沈佳琪的工时明细，按模板生成富文本周日志，并写入 CRM `JournalObj`。
+每周五 19:00（本地 launchd）自动拉取沈佳琪的工时明细，按模板生成**纯文本**周日志，并写入 CRM `JournalObj`。可选飞书 Webhook 推送执行结果。
+
+常用命令见 **[COMMANDS.md](./COMMANDS.md)**。
 
 ## 项目结构
 
 ```
 crm-auto/
 ├── src/
-│   ├── index.js           # 主入口
-│   ├── mcp-client.js      # MCP 查询 / 写入封装
-│   ├── summarize.js       # 分组 + 文本模板渲染
-│   └── journal-writer.js  # JournalObj 写入
+│   ├── index.js              # 主入口
+│   ├── mcp-client.js         # MCP 查询 / 写入封装
+│   ├── summarize.js          # 分组 + 文本模板渲染
+│   ├── journal-writer.js     # JournalObj 写入
+│   └── feishu-notify.js      # 飞书 Webhook（可选）
+├── launchd/                  # macOS 定时（install / uninstall / plist）
+├── COMMANDS.md               # 常用命令备忘
 ├── .github/
 │   └── workflows/
-│       └── weekly-journal.yml   # CI 定时任务
+│       └── weekly-journal.yml   # CI 手动触发（境外 IP 通常无法连 MCP）
 ├── .env.example
 └── package.json
 ```
@@ -59,13 +64,19 @@ bash launchd/install.sh           # 注册 launchd 任务
 ```
 
 完成后：
+
 - 每周五 19:00 CST 自动触发
 - 日志输出：`~/Library/Logs/crm-weekly-journal.log`
-- 立即测试一次：`launchctl start com.shenjiaqi.crm-weekly-journal`
-- 查看状态：`launchctl list | grep crm-weekly-journal`
-- 卸载：`bash launchd/uninstall.sh`
+- 更多命令：**[COMMANDS.md](./COMMANDS.md)**
 
 > Mac 在触发时刻处于睡眠/关机会自动顺延，launchd 在唤醒后会补跑当次。
+
+### 飞书通知（可选）
+
+在 `.env` 中填写 `FEISHU_WEBHOOK_URL`（飞书群「自定义机器人」完整 Webhook）。任务**成功**（含 dry-run）、**无工时跳过**、**异常失败**各推送一条文本摘要。  
+勿将 Webhook 提交到仓库；线上 CI 可配置同名 Secret `FEISHU_WEBHOOK_URL`。
+
+> 若 Webhook 曾在聊天/代码中泄露，请在飞书群内**删除并重新添加机器人**以轮换地址。
 
 ### GitHub Actions（可选，仅手动触发）
 
@@ -75,7 +86,8 @@ bash launchd/install.sh           # 注册 launchd 任务
 |---|---|
 | `MCP_TOKEN` | MCP 鉴权 Token（FSUTK_xxx） |
 | `MINIMAX_API_KEY` | MiniMax API Key（可选） |
-| `OPENAI_API_KEY` | OpenAI API Key（可选，二选一） |
+| `OPENAI_API_KEY` | OpenAI API Key（可选） |
+| `FEISHU_WEBHOOK_URL` | 飞书机器人 Webhook（可选，与本地 `.env` 同项） |
 
 在 **Variables** 中添加（可选）：
 

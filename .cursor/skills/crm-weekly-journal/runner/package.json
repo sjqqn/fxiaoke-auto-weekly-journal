@@ -1,0 +1,18 @@
+{
+  "name": "crm-weekly-journal-runner",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Bundled weekly journal runner for the crm-weekly-journal skill (ESM, Node 18+)",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dry-run": "node index.js --dry-run"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
